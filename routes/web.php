@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PinController;
+use App\Http\Controllers\TaskController;
 use App\Models\Pin;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -18,7 +19,8 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Home', [
+    // return Inertia::render('Home', [
+    return Inertia::render('Todoapp/Dashboard', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
@@ -47,3 +49,7 @@ Route::middleware([
     Route::post('/pins/store', [PinController::class, 'store'])->name('pin.create');
     Route::post('/pins/destroy', [PinController::class, 'destroy'])->name('pin.destroy');
 });
+
+//Task
+Route::get('/tasks', [TaskController::class, 'index']);
+Route::post('/tasks', [TaskController::class, 'store']);

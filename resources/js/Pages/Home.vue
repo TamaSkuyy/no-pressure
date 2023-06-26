@@ -11,13 +11,13 @@
         </div>
 
         <div class="flex w-full container mx-auto flex-col py-10 gap-10">
-            <h1 class="text-3xl">Pins</h1>
+            <h1 class="text-3xl">Todo List</h1>
 
-            <div v-for="pin in pins" :key="pin.id" class="bg-white px-5 py-2 rounded-md">
+            <!-- <div v-for="pin in pins" :key="pin.id" class="bg-white px-5 py-2 rounded-md">
                 <h1 class="pb-5">by: <span class="font-semibold text-indigo-600">{{ pin.user_name }}</span></h1>
                 <h1 class="text-xl font-bold">{{ pin.title }}</h1>
                 <p>{{ pin.description }}</p>
-            </div>
+            </div> -->
         </div>
     </section>
 </template>

@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Pin;
 use App\Models\User;
+use App\Models\Task;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -23,8 +24,15 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password1234')
         ]);
 
+        User::factory()->create([
+            'name' => 'test',
+            'email' => 'test@testing.com',
+            'password' => bcrypt('12345678')
+        ]);
+
         User::factory()
             ->hasPins(2)
             ->create();
+
     }
 }
