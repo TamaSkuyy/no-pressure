@@ -3,6 +3,7 @@
 use App\Http\Controllers\PinController;
 use App\Http\Controllers\TaskController;
 use App\Models\Pin;
+use App\Models\Task;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,19 +20,21 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    // return Inertia::render('Home', [
     return Inertia::render('Todoapp/Dashboard', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-        'pins' => Pin::all()->map( function ($pin) {
+        'tasks_data' => Task::all()->map( function ($tasks) {
             return [
-                'title' => $pin->title,
-                'description' => $pin->description,
-                'user_name' => $pin->User->name
+                'title' => $tasks->title,
+                'id' => $tasks->id,
+                'task' => $tasks->task,
+                'due_date' => $tasks->due_date,
+                'completed' => $tasks->completed
             ];
-        })
+        }),
+
     ]);
 })->name('home');
 
@@ -52,4 +55,6 @@ Route::middleware([
 
 //Task
 Route::get('/tasks', [TaskController::class, 'index']);
-Route::post('/tasks', [TaskController::class, 'store']);
+Route::post('/tasks/store', [TaskController::class, 'store']);
+Route::put('/tasks-complete/{id}', [TaskController::class, 'update_completness']);
+Route::delete('/tasks/destroy/{id}', [TaskController::class, 'destroy']);

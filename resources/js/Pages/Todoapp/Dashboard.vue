@@ -4,9 +4,9 @@
             <h1 class="text-3xl font-bold mb-4 text-center">To-Do List</h1>
             <form @submit.prevent="addTask">
                 <div class="flex mb-4">
-                    <input type="text" v-model="newTask" placeholder="Enter a new task"
+                    <input type="text" v-model="form.newTask" placeholder="Enter a new task"
                         class="border border-gray-300 p-2 rounded-md flex-1 mr-2 text-black focus:outline-none" />
-                    <input type="text" v-model="dueDate" placeholder="Enter due date"
+                    <input type="text" v-model="form.dueDate" placeholder="Enter due date"
                         class="border border-gray-300 p-2 rounded-md flex-1 text-black focus:outline-none" ref="dateInput"
                         @focus="changeInputType('date')" @blur="dueDate === '' ? changeInputType('text') : null" />
                     <button type="submit"
@@ -17,13 +17,13 @@
             </form>
             <table class="table mt-4 w-full">
                 <tbody>
-                    <tr v-for="(task, index) in tasks" :key="index" :class="{
+                    <tr v-for="(task, index) in tasks_data" :key="task.id" :class="{
                         'border-b border-gray-300 hover:background-black': true,
-                        'text-green-500': completedTasks.includes(index)
+                        'text-green-500': completedTasks.includes(task.id)
                     }">
                         <td class="px-4 py-2">
-                            <button @click="toggleComplete(index)" class="focus:outline-none rounded-full p-2">
-                                <span v-if="completedTasks.includes(index)" class="text-green-500">
+                            <button @click="update_completness(task.id)" class="focus:outline-none rounded-full p-2">
+                                <span v-if="completedTasks.includes(task.id)" class="text-green-500">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd"
@@ -42,53 +42,83 @@
                         </td>
                         <td class="px-4 py-2">
                             <span :class="{
-                                'line-through': completedTasks.includes(index),
-                                'text-white-700': !completedTasks.includes(index)
+                                'line-through': completedTasks.includes(task.id),
+                                'text-white-700': !completedTasks.includes(task.id)
                             }">
-                                {{ task }}
+                                {{ task.task }} (Due: {{ task.due_date }})
                             </span>
                         </td>
                         <td class="px-4 py-2">
-                            <button @click="removeTask(index)" class="text-red-500 hover:text-red-700 focus:outline-none">
-                                Remove
+                            <button @click.prevent="removeTask(task.id)"
+                                class="text-red-500 hover:text-red-700 focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M16.293 5.293a1 1 0 0 0-1.414 0L10 9.586 5.707 5.293a1 1 0 1 0-1.414 1.414L8.586 11l-4.293 4.293a1 1 0 1 0 1.414 1.414L10 12.414l4.293 4.293a1 1 0 0 0 1.414-1.414L11.414 11l4.293-4.293a1 1 0 0 0 0-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
                             </button>
                         </td>
+
                     </tr>
                 </tbody>
             </table>
 
             <p class="text-white-600 mt-2">
                 {{ completedTasks.length }} Completed /
-                {{ tasks.length - completedTasks.length }} Not Finished
+                {{ tasks_data.length - completedTasks.length }} Not Finished
             </p>
         </div>
     </div>
 </template>
   
 <script>
+import { reactive } from 'vue'
+import { Inertia } from '@inertiajs/inertia'
+import { useForm } from '@inertiajs/inertia-vue3'
+
 export default {
+    setup() {
+        const form = reactive({
+            newTask: '',
+            dueDate: ''
+        })
+
+        function addTask() {
+            Inertia.post('/tasks/store', form)
+        }
+
+        // function update_completness(id){
+        //     Inertia.put('/tasks-complete/' + id);
+        // }
+
+        function removeTask(id) {
+            if (confirm("Are you sure you want to Delete")) {
+                Inertia.delete('/tasks/destroy/' + id);
+            }
+        }
+
+        return { form, addTask, removeTask }
+    },
+    created() {
+        this.filterCompletedTasks();
+    },
     data() {
         return {
-            tasks: [],
-            newTask: '',
-            dueDate: '',
             completedTasks: []
         };
     },
+    props: {
+        canLogin: Boolean,
+        canRegister: Boolean,
+        laravelVersion: String,
+        phpVersion: String,
+        tasks_data: {
+            Type: Object,
+            default: () => { }
+        }
+    },
     methods: {
-        addTask() {
-            if (this.newTask && this.dueDate) {
-                const taskWithDueDate = `${this.newTask} (Due: ${this.dueDate})`;
-                this.tasks.push(taskWithDueDate);
-                this.newTask = '';
-                this.dueDate = '';
-
-                this.changeInputType('text');
-            }
-        },
-        removeTask(index) {
-            this.tasks.splice(index, 1);
-        },
         changeInputType(type) {
             this.$nextTick(() => {
                 const input = this.$refs.dateInput;
@@ -103,8 +133,35 @@ export default {
                 this.completedTasks.push(index);
             }
         },
+        filterCompletedTasks() {
+            this.completedTasks = this.tasks_data
+                .filter(task => task.completed == 1)
+                .map(task => task.id)
+                ;
+        },
+        update_completness(id) {
+            // Inertia.put('/tasks-complete/' + id);
+            Inertia.visit('/tasks-complete/' + id, {
+                method: 'PUT',
+                onSuccess: () => {
+                    console.log("Data refreshed successfully.");
+                },
+                onError: () => {
+                    console.log("Error refreshing data.");
+                }
+            });
+            // console.log(this.tasks_data);
+            // console.log(this.completedTasks);
+            // // this.completedTasks = [];
+            // // this.completedTasks = this.tasks_data
+            // //     .filter(task => task.completed == 1)
+            // //     .map(task => task.id)
+            // //     ;
+            // // console.log(this.completedTasks);
+        }
     }
 };
+
 </script>
   
 <style>
@@ -211,5 +268,5 @@ input[type="text"]:focus {
     background-clip: padding-box;
     box-shadow: 10px 10px 10px rgba(46, 54, 68, 0.03);
 }
-</style>
-  
+
+</style>  
